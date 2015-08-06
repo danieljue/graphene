@@ -69,8 +69,11 @@ public class FileUtils {
 				// by elimination
 				envVarName = m.group(3);
 			}
-			final String envVarValue = Matcher.quoteReplacement(System.getenv(envVarName));
-			m.appendReplacement(sb, null == envVarValue ? "" : envVarValue);
+			String enVarValueWithQuotes = System.getenv(envVarName);
+			if (ValidationUtils.isValid(enVarValueWithQuotes)) {
+				final String envVarValue = Matcher.quoteReplacement(enVarValueWithQuotes);
+				m.appendReplacement(sb, null == envVarValue ? "" : envVarValue);
+			}
 		}
 		m.appendTail(sb);
 		String newPath = sb.toString();
