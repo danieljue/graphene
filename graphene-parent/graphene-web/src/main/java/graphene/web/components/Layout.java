@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.web.components;
 
 import graphene.model.idl.G_SymbolConstants;
@@ -5,14 +23,17 @@ import graphene.model.idl.G_User;
 import graphene.model.idl.G_UserDataAccess;
 import graphene.model.idl.G_Workspace;
 import graphene.model.idlhelper.AuthenticatorHelper;
+import graphene.web.components.navigation.Header;
 
 import java.util.List;
 import java.util.Locale;
+import java.net.URL;
 
 import org.apache.tapestry5.ComponentResources;
 import org.apache.tapestry5.Link;
 import org.apache.tapestry5.annotations.Environmental;
 import org.apache.tapestry5.annotations.Import;
+import org.apache.tapestry5.annotations.InjectComponent;
 import org.apache.tapestry5.annotations.Property;
 import org.apache.tapestry5.annotations.SessionState;
 import org.apache.tapestry5.func.Tuple;
@@ -93,15 +114,21 @@ public class Layout {
 	private boolean workspacesExists;
 	@Inject
 	private RequestGlobals rq;
+    
+    @InjectComponent
+    private Header header;
 
 	void afterRender() {
 		jss.addInitializerCall("makeLogout", "logout");
+	}
+	
+	public Header getHeader() {
+	    return header;
 	}
 
 	public JSONObject getJgrowlParams() {
 		final JSONObject json = new JSONObject("position", "bottom-right");
 		return json;
-
 	}
 
 	/**
@@ -120,8 +147,7 @@ public class Layout {
 	// logger.debug("can has user? " + user.getFullname());
 	// }
 
-	public Object onLogout() {
-		authenticatorHelper.logout();
-		return null;
+	public Object onLogout() throws Exception {
+		return authenticatorHelper.logout();
 	}
 }

@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.services;
 
 import graphene.dao.GroupDAO;
@@ -11,7 +29,10 @@ import graphene.dao.WorkspaceDAO;
 import graphene.model.idl.AuthenticationException;
 import graphene.model.idl.G_Group;
 import graphene.model.idl.G_Permission;
+import graphene.model.idl.G_PropertyDescriptors;
+import graphene.model.idl.G_PropertyMatchDescriptor;
 import graphene.model.idl.G_Role;
+import graphene.model.idl.G_SearchResults;
 import graphene.model.idl.G_SymbolConstants;
 import graphene.model.idl.G_User;
 import graphene.model.idl.G_UserDataAccess;
@@ -391,18 +412,19 @@ public class UserServiceImpl implements G_UserDataAccess {
 	@Override
 	public G_Workspace saveWorkspace(final String userId, final G_Workspace workspace)
 			throws UnauthorizedActionException {
+
 		// save the workspace
 		if (uwDao.hasRelationship(userId, workspace.getId(), G_UserSpaceRelationshipType.CREATOR_OF,
 				G_UserSpaceRelationshipType.EDITOR_OF)) {
 			logger.debug("User has permission to save to this workspace.");
 			workspace.setModified(DateTime.now().getMillis());
 			return wDao.save(workspace);
-		} else {
-			final String errorStr = "User " + userId + " did not have permission to save Workspace "
-					+ workspace.getId() + ".";
-			logger.error(errorStr);
-			throw new UnauthorizedActionException(errorStr);
 		}
+		
+		final String errorStr = "User " + userId + " did not have permission to save Workspace "
+				+ workspace.getId() + ".";
+		logger.error(errorStr);
+		throw new UnauthorizedActionException(errorStr);
 	}
 
 	@Override
@@ -436,5 +458,16 @@ public class UserServiceImpl implements G_UserDataAccess {
 		}
 		return exists;
 	}
-
+	
+	@Override
+	public G_PropertyDescriptors getDescriptors() {
+	    logger.debug("getDescriptors() invoked");
+	    return null;
+	}
+	
+	@Override
+	public G_SearchResults search(java.util.List<graphene.model.idl.G_PropertyMatchDescriptor> terms, long start, long max) {
+	    logger.debug("search() invoked");
+	    return null;
+	}
 }

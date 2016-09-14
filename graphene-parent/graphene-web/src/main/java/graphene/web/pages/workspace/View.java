@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.web.pages.workspace;
 
 import graphene.dao.DataSourceListDAO;
@@ -97,10 +115,6 @@ public class View extends SimpleBasePage {
 	private AjaxResponseRenderer ajax;
 	@Inject
 	private DataSourceListDAO dao;
-
-	private List<String> reportViewIds;
-
-	private List<String> reportIds;
 
 	@InjectComponent
 	private Zone reportViewListZone;
@@ -256,7 +270,7 @@ public class View extends SimpleBasePage {
 	}
 
 	void onDeleteQuery(final long timeInitiated) {
-		for (int i = 1; i < currentSelectedWorkspace.getQueryObjects().size(); i++) {
+		for (int i = 0; i < currentSelectedWorkspace.getQueryObjects().size(); i++) {
 			if (currentSelectedWorkspace.getQueryObjects().get(i).getTimeInitiated() == timeInitiated) {
 				currentSelectedWorkspace.getQueryObjects().remove(i);
 				break;
@@ -295,11 +309,10 @@ public class View extends SimpleBasePage {
 	// onPassivate() is called by Tapestry to get the activation context to put
 	// in the id.
 	String onPassivate() {
-		if (currentSelectedWorkspaceExists) {
+		if (currentSelectedWorkspaceExists)
 			return currentSelectedWorkspace.getId();
-		} else {
-			return null;
-		}
+
+		return null;
 	}
 
 	public Object onSearch(final G_EntityQuery q) {

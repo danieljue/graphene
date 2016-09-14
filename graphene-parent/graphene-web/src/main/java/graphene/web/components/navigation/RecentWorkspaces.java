@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.web.components.navigation;
 
 import graphene.model.idl.G_User;
@@ -5,6 +23,8 @@ import graphene.model.idl.G_UserDataAccess;
 import graphene.model.idl.G_Workspace;
 import graphene.util.ExceptionUtil;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.avro.AvroRemoteException;
@@ -79,9 +99,8 @@ public class RecentWorkspaces {
 
 		if (userExists) {
 			updateListOfWorkspaces();
-			if ((!currentSelectedWorkspaceExists || !workspacesExists)) {
-				selectMostRecentWorkspace();
-			}
+			if ((!currentSelectedWorkspaceExists || !workspacesExists))
+			    selectMostRecentWorkspace();
 		} else {
 			currentSelectedWorkspace = null;
 			workspaces = null;
@@ -132,23 +151,29 @@ public class RecentWorkspaces {
 		}
 	}
 
-	private void selectMostRecentWorkspace() {
+	public void selectMostRecentWorkspace() {
 		// logger.debug("Selecting most recent workspace");
-		if (workspaces.size() > 1) {
+		if (workspaces.size() > 0) {
 			// already sorted, just grab the top one.
-			currentSelectedWorkspace = workspaces.get(0);
+            currentSelectedWorkspace = workspaces.get(workspaces.size() - 1);
 		} else {
 			currentSelectedWorkspace = null;
 		}
 	}
 
-	private void updateListOfWorkspaces() {
+	public void updateListOfWorkspaces() {
 		try {
 			// already sorted for us
-			workspaces = userDataAccess.getLatestWorkspacesForUser(user.getId(), 10);
+            workspaces = userDataAccess.getLatestWorkspacesForUser(user.getId(), 10);
+//            Collections.sort(workspaces, new Comparator<G_Workspace>() {
+//                public int compare(G_Workspace o1, G_Workspace o2) {
+//                    return o2.getModified().compareTo(o1.getModified());
+//                }
+//            });
 		} catch (final AvroRemoteException e) {
 			workspaces = null;
 			logger.error(e.getMessage());
 		}
 	}
+
 }

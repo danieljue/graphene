@@ -1,10 +1,31 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.web.components.workspace;
 
 import graphene.model.idl.G_ReportViewEvent;
 import graphene.model.idl.G_User;
 import graphene.model.idl.G_UserDataAccess;
 import graphene.model.idl.G_Workspace;
+import graphene.web.pages.workspace.Manage;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.avro.AvroRemoteException;
@@ -12,6 +33,7 @@ import org.apache.tapestry5.ComponentResources;
 import org.apache.tapestry5.alerts.AlertManager;
 import org.apache.tapestry5.annotations.Events;
 import org.apache.tapestry5.annotations.InjectComponent;
+import org.apache.tapestry5.annotations.InjectContainer;
 import org.apache.tapestry5.annotations.Parameter;
 import org.apache.tapestry5.annotations.Persist;
 import org.apache.tapestry5.annotations.Property;
@@ -48,7 +70,7 @@ public class WorkspaceList {
 
 	@InjectComponent
 	private Zone listZone;
-
+    
 	@Inject
 	private Logger logger;
 	// The code
@@ -93,29 +115,22 @@ public class WorkspaceList {
 	@SessionState
 	private List<G_Workspace> workspaces;
 
-	private boolean workspacesExists;
-
 	public String getLinkCSSClass() {
-		if ((workspace != null) && (workspace.getId().equals(selectedWorkspaceId))) {
+		if ((workspace != null) && (workspace.getId() != null) && (workspace.getId().equals(selectedWorkspaceId)))
 			return "active";
-		} else {
-			return "";
-		}
+
+		return "";
 	}
 
 	public List<G_Workspace> getListOfWorkspaces() {
 		if (userExists) {
-			if (!workspacesExists) {
-				try {
-					logger.debug("Updating list of workspaces");
-					workspaces = userDataAccess.getWorkspacesForUser(user.getId());
-				} catch (final AvroRemoteException e) {
-					logger.error(e.getMessage());
-				}
-			} else {
-				logger.debug("List of workspaces already exists.");
+			try {
+				logger.debug("Updating list of workspaces");
+				workspaces = userDataAccess.getWorkspacesForUser(user.getId());
+			} catch (final AvroRemoteException e) {
+				logger.error(e.getMessage());
 			}
-		} else {
+        } else {
 			logger.error("No user name to get workspaces for.");
 			workspaces = null;
 		}
@@ -163,8 +178,8 @@ public class WorkspaceList {
 				"true",
 				"sDom",
 				"<\"col-sm-4\"f><\"col-sm-4\"i><\"col-sm-4\"l><\"row\"<\"col-sm-12\"p><\"col-sm-12\"r>><\"row\"<\"col-sm-12\"t>><\"row\"<\"col-sm-12\"ip>>");
-		// Sort by score then by date.
-		json.put("aaSorting", new JSONArray().put(new JSONArray().put(1).put("desc")));
+		// Sorts the columns of workspace tables.
+		json.put("aaSorting", new JSONArray().put(new JSONArray().put(0).put("asc")));
 		// new JSONObject().put("aTargets", new JSONArray().put(0, 4));
 		// final JSONObject sortType = new JSONObject("sType", "formatted-num");
 		// final JSONArray columnArray = new JSONArray();
@@ -187,7 +202,7 @@ public class WorkspaceList {
 		// up.
 		// This method is here solely as documentation, because without this
 		// method the event would bubble up anyway.
+
 		return false;
 	}
-
 }

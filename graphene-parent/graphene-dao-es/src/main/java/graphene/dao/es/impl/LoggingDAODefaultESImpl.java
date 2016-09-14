@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.dao.es.impl;
 
 import graphene.dao.LoggingDAO;
@@ -5,6 +23,7 @@ import graphene.dao.es.BasicESDAO;
 import graphene.dao.es.ESRestAPIConnection;
 import graphene.dao.es.JestModule;
 import graphene.model.idl.G_EntityQuery;
+import graphene.model.idl.G_EntityQueryEvent;
 import graphene.model.idl.G_ExportEvent;
 import graphene.model.idl.G_GraphViewEvent;
 import graphene.model.idl.G_ReportViewEvent;
@@ -24,6 +43,7 @@ import mil.darpa.vande.interactions.TemporalGraphQuery;
 import org.apache.tapestry5.ioc.annotations.Inject;
 import org.apache.tapestry5.ioc.annotations.PostInjection;
 import org.apache.tapestry5.ioc.annotations.Symbol;
+import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -71,6 +91,15 @@ public class LoggingDAODefaultESImpl extends BasicESDAO implements LoggingDAO {
 		this.c = c;
 		mapper = new ObjectMapper(); // can reuse, share globally
 		this.logger = logger;
+	}
+	
+	@PostInjection
+	public void listenForShutdown(RegistryShutdownHub hub) {
+		hub.addRegistryShutdownListener(new Runnable() {
+			public void run() {
+				executor.shutdown();
+			}
+		});
 	}
 
 	@Override
@@ -302,13 +331,13 @@ public class LoggingDAODefaultESImpl extends BasicESDAO implements LoggingDAO {
 	}
 
 	@Override
-	public void recordQuery(final G_EntityQuery q) {
+	public void recordQueryEvent(final G_EntityQueryEvent q) {
 		if (enableLogging) {
 			if (ValidationUtils.isValid(q)) {
 				executor.execute(new Runnable() {
 					@Override
 					public void run() {
-						saveObject(q, q.getId(), indexName, searchQueryType, false);
+						saveObject(q, q.getQ().getId(), indexName, searchQueryType, false);
 					}
 				});
 			} else {
@@ -317,24 +346,6 @@ public class LoggingDAODefaultESImpl extends BasicESDAO implements LoggingDAO {
 		}
 		return;
 	}
-
-	// @Override
-	// public void recordQuery(final V_GraphQuery q) {
-	// if (enableLogging) {
-	// if (ValidationUtils.isValid(q)) {
-	// executor.execute(new Runnable() {
-	// @Override
-	// public void run() {
-	// saveObject(q, q.getId(), indexName, graphQueryType, false);
-	// }
-	// });
-	//
-	// } else {
-	// logger.error("Attempted to save a null V_GraphQuery!");
-	// }
-	// }
-	// return;
-	// }
 
 	@Override
 	public void recordReportViewEvent(final G_ReportViewEvent q) {

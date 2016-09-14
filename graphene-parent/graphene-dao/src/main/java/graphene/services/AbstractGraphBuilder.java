@@ -1,8 +1,27 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.services;
 
 import graphene.dao.DocumentBuilder;
 import graphene.dao.G_Parser;
 import graphene.dao.HyperGraphBuilder;
+import graphene.dao.LoggingDAO;
 import graphene.dao.StopWordService;
 import graphene.dao.StyleService;
 import graphene.model.idl.G_CallBack;
@@ -12,6 +31,7 @@ import graphene.model.idl.G_DataAccess;
 import graphene.model.idl.G_DocumentError;
 import graphene.model.idl.G_Entity;
 import graphene.model.idl.G_EntityQuery;
+import graphene.model.idl.G_EntityQueryEvent;
 import graphene.model.idl.G_PropertyKeyTypeAccess;
 import graphene.model.idl.G_PropertyMatchDescriptor;
 import graphene.model.idl.G_PropertyType;
@@ -53,7 +73,8 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 	@Inject
 	@Symbol(G_SymbolConstants.INHERIT_NODE_ATTRIBUTES)
 	protected boolean inheritAttributes;
-
+    @Inject
+    protected LoggingDAO loggingDao;
 	@Inject
 	protected StopWordService stopwordService;
 
@@ -171,6 +192,7 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 					try {
 						// Get a bunch of records
 						searchResults = getDAO().search(eq);
+						
 						for (final G_SearchResult t : searchResults.getResults()) {
 							if (ValidationUtils.isValid(t.getResult())) {
 								final G_Entity entity = (G_Entity) t.getResult();
@@ -223,16 +245,13 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 		if (g.getNodes().size() > graphQuery.getMaxNodes()) {
 			g.setNodes(nodesFromPreviousDegree);
 			g.setEdges(edgesFromPreviousDegree);
-			intStatus = 1; // will trigger the message.
-			strStatus = "Returning only " + currentDegree + " hops, as maximum nodes you requested would be exceeded";
-		} else {
-			intStatus = 1; // will trigger the message.
-			strStatus = "Returning " + g.getNodes().size() + " nodes and " + g.getEdges().size() + " edges.";
 		}
 
 		// NOW finally add in all those unique edges.
 
 		g = performPostProcess(graphQuery, g);
+        intStatus = 1; // will trigger the message.
+        strStatus = "Returning " + g.getNodes().size() + " nodes and " + g.getEdges().size() + " edges.";
 
 		// final V_GenericGraph g = new V_GenericGraph(g.getNodes(), edgeList);
 		g.setIntStatus(intStatus);
@@ -251,8 +270,9 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 	 */
 	@Override
 	public void buildQueryForNextIteration(final V_GenericNode... nodes) {
-		if (ValidationUtils.isValid(nodes)) {
-			for (final V_GenericNode n : nodes) {
+
+		for (final V_GenericNode n : nodes) {
+		    if (ValidationUtils.isValid(n)) {
 				for (final G_EntityQuery eq : createQueriesFromNode(n)) {
 					final String queryToString = eq.toString();
 					// Have we done this EXACT query before? Note: a query
@@ -271,11 +291,11 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 						logger.debug("Skipping query eq! " + queryToString);
 					}
 				}
-
-			}
-		} else {
-			logger.warn("Will not build a query for the node(s) passed in");
+	        } else {
+	            logger.warn("Will not build a query for node " + ((n == null)? "null" : n.getLabel()));
+	        }
 		}
+
 		logger.debug("There are " + queriesToRunNextDegree.size() + " queries to run for the next degree. ref ");
 	}
 
@@ -565,13 +585,16 @@ public abstract class AbstractGraphBuilder implements G_CallBack, HyperGraphBuil
 		} else {
 			// logger.warn("No linkGenerator search page defined when making a link for "
 			// + identifier);
-			final String encodedIdentifier = encoder.encode(identifier);
-			String matchType = "COMPARE_CONTAINS";
+			final String encodedIdentifier = encoder.encode(nodeType.equals("ENTITY")? identifier.substring(0, identifier.indexOf("-subject")) : identifier);
+			String matchType = "CONTAINS";
 			if (nodeType.contains("ADDRESS")) {
-				matchType = "COMPARE_EQUALS";
+				matchType = "EQUALS";
 			}
-			return "<a href=\"graphene\\CombinedEntitySearchPage/?term=" + encodedIdentifier + "&match=" + matchType
-					+ "\" target=\"" + identifier + "\" class=\"btn btn-primary\" >" + identifier + "</a>";
+//			return "<a href=\"graphene\\CombinedEntitySearchPage/?term=" + encodedIdentifier + "&match=" + matchType
+//					+ "\" target=\"" + identifier + "\" class=\"btn btn-primary\" >" + identifier + "</a>";
+			
+	         return "<a href=\"graphene/CombinedEntitySearchPage/?term=" + encodedIdentifier + "&match=" + matchType
+                 + "\" target=\"" + identifier + "\" class=\"btn btn-primary\" >" + identifier + "</a>";
 		}
 	}
 

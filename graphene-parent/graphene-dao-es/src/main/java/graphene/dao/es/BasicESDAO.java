@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.dao.es;
 
 import graphene.dao.DataSourceListDAO;
@@ -157,18 +175,18 @@ public class BasicESDAO implements G_DataAccess {
 
 				switch (constraint) {
 				case EQUALS:
-					bool = bool.must(QueryBuilders.multiMatchQuery(text, fieldArray));
-					constraintUsed = true;
-					break;
+                    for (final String sf : fieldArray) {
+                        bool = bool.must(QueryBuilders.matchPhraseQuery(sf, text));
+                        constraintUsed = true;
+                    }
+                    break;
 				case CONTAINS:
-					for (final String sf : fieldArray) {
-						bool = bool.should(QueryBuilders.matchPhraseQuery(sf, text));
-						constraintUsed = true;
-					}
-					break;
+                    bool = bool.should(QueryBuilders.multiMatchQuery(text, fieldArray));
+                    constraintUsed = true;
+                    break;
 				case STARTS_WITH:
 					for (final String sf : fieldArray) {
-						bool = bool.should(QueryBuilders.prefixQuery(sf, text));
+						bool = bool.should(QueryBuilders.prefixQuery(sf, text.toLowerCase()));
 						constraintUsed = true;
 					}
 					break;
@@ -178,7 +196,7 @@ public class BasicESDAO implements G_DataAccess {
 						constraintUsed = true;
 					}
 					break;
-				case FUZZY_REQUIRED:
+				case LIKE:
 					bool = bool.must(QueryBuilders.fuzzyLikeThisQuery(fieldArray).likeText(text));
 					constraintUsed = true;
 					break;
@@ -193,7 +211,8 @@ public class BasicESDAO implements G_DataAccess {
 						constraintUsed = true;
 						break;
 					case CONTAINS:
-						bool = bool.should(QueryBuilders.matchPhraseQuery(key, text));
+	                    bool = bool.should(QueryBuilders.multiMatchQuery(text, fieldArray));
+//						bool = bool.should(QueryBuilders.matchPhraseQuery(key, text));
 						constraintUsed = true;
 						break;
 					case STARTS_WITH:
@@ -219,10 +238,13 @@ public class BasicESDAO implements G_DataAccess {
 				} else {
 					logger.warn("Could not find specific fields for the key " + pmdh.getKey());
 				}
-				String start = null;
-				String end = null;
+				Object start = null;
+				Object end = null;
 				if (br.getStart() != null) {
 					switch (pmdh.getType()) {
+					case LONG:
+						start = br.getStart();
+						break;
 					case STRING:
 						start = br.getStart().toString();
 						break;
@@ -236,6 +258,9 @@ public class BasicESDAO implements G_DataAccess {
 				}
 				if (br.getEnd() != null) {
 					switch (pmdh.getType()) {
+					case LONG:
+						end = br.getEnd();
+						break;
 					case STRING:
 						end = br.getEnd().toString();
 						break;
@@ -579,7 +604,7 @@ public class BasicESDAO implements G_DataAccess {
 			// Use the match phrase query so it doesn't tokenize the value.
 			searchSourceBuilder.query(QueryBuilders.matchPhraseQuery(field, value));
 			final Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(index).addType(type)
-					.setParameter("timeout", defaultESTimeout).build();
+					.setParameter("timeout", defaultESTimeout).setParameter("size", 1000).build();
 			logger.debug(searchSourceBuilder.toString());
 
 			try {
@@ -914,6 +939,7 @@ public class BasicESDAO implements G_DataAccess {
 	@Override
 	public String saveObject(final Object g, final String id, final String indexName, final String type,
 			final boolean useDelay) {
+
 		Index saveAction;
 		if (!ValidationUtils.isValid(id)) {
 			// saving without an id.
@@ -943,6 +969,7 @@ public class BasicESDAO implements G_DataAccess {
 		} catch (final Exception e) {
 			logger.error("saveObject " + e.getMessage());
 		}
+		
 		return generatedId;
 	}
 
