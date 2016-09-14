@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.dao.es.impl;
 
 import graphene.dao.UserDAO;
@@ -143,7 +161,7 @@ public class UserWorkspaceDAOESImpl extends BasicESDAO implements UserWorkspaceD
 		Collections.sort(returnValue, new Comparator<G_Workspace>() {
 			@Override
 			public int compare(final G_Workspace o1, final G_Workspace o2) {
-				return o1.getModified().compareTo(o2.getModified());
+				return o2.getModified().compareTo(o1.getModified());
 			}
 		});
 
@@ -178,7 +196,9 @@ public class UserWorkspaceDAOESImpl extends BasicESDAO implements UserWorkspaceD
 		 * first.
 		 */
 		final Set<String> workspaceIds = new HashSet<String>();
-		for (final G_UserWorkspace r : getByUserId(userId)) {
+
+        List<G_UserWorkspace> ws = getByUserId(userId);
+		for (final G_UserWorkspace r : ws) {
 			workspaceIds.add(r.getWorkspaceId());
 		}
 		if (workspaceIds.isEmpty()) {
@@ -228,7 +248,14 @@ public class UserWorkspaceDAOESImpl extends BasicESDAO implements UserWorkspaceD
 			logger.debug("Deleting user-workspace relation " + r.getId());
 			success = delete(r.getId());
 		}
-
+        if (success && ES_READ_DELAY_MS > 0) {
+            try {
+                Thread.sleep(ES_READ_DELAY_MS);
+            }
+            catch (Exception e) {
+                logger.error("removeUserPermissionFromWorkspace " + e.getMessage());
+            }
+        }
 		return success;
 	}
 
@@ -242,6 +269,7 @@ public class UserWorkspaceDAOESImpl extends BasicESDAO implements UserWorkspaceD
 				success = delete(r.getId());
 			}
 		}
+
 		return success;
 	}
 

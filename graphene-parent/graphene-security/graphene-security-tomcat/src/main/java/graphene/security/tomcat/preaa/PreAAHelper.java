@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.security.tomcat.preaa;
 
 import graphene.business.commons.exception.BusinessException;
@@ -11,6 +29,8 @@ import graphene.util.validator.ValidationUtils;
 
 import java.io.IOException;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.avro.AvroRemoteException;
@@ -245,7 +265,7 @@ public class PreAAHelper implements AuthenticatorHelper {
 	}
 
 	@Override
-	public void logout() {
+	public Object logout() {
 		logger.debug(securityService.isAuthenticated() ? "During Logout: User is authenticated"
 				: "During Logout: User is not authenticated");
 		logger.debug(userExists ? "During Logout: User SSO exists" : "During Logout: User SSO does not exist");
@@ -254,6 +274,18 @@ public class PreAAHelper implements AuthenticatorHelper {
 		applicationStateManager.set(G_User.class, null);
 
 		securityService.getSubject().logout();
+		return null;
 	}
-
+	
+	@Override
+	public String getUsername() {
+		
+		String username = null;
+		HttpServletRequest request = rq.getHTTPServletRequest();
+		if (request != null) {
+			username = request.getRemoteUser();
+		}
+		
+		return username;
+	}
 }

@@ -1,3 +1,21 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.web.components.navigation;
 
 import graphene.dao.DataSourceListDAO;
@@ -10,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.tapestry5.EventConstants;
 import org.apache.tapestry5.Link;
 import org.apache.tapestry5.PersistenceConstants;
 import org.apache.tapestry5.SelectModel;
@@ -17,6 +36,7 @@ import org.apache.tapestry5.alerts.AlertManager;
 import org.apache.tapestry5.alerts.Duration;
 import org.apache.tapestry5.alerts.Severity;
 import org.apache.tapestry5.annotations.InjectPage;
+import org.apache.tapestry5.annotations.OnEvent;
 import org.apache.tapestry5.annotations.Persist;
 import org.apache.tapestry5.annotations.Property;
 import org.apache.tapestry5.annotations.SetupRender;
@@ -55,16 +75,19 @@ public class GlobalSearch {
 	@Persist
 	@Property
 	private Integer selectedMaxResults;
+	
 	@Inject
 	@Symbol(G_SymbolConstants.DEFAULT_MAX_SEARCH_RESULTS)
 	private Integer defaultMaxResults;
+	
 	@Inject
 	private Logger logger;
 
 	@InjectPage
 	private CombinedEntitySearchPage searchPage;
-
-	Object onSuccessFromGlobalSearchForm() {
+	
+	@OnEvent(value = EventConstants.SUCCESS, component = "globalSearchForm")
+	Object onSuccessFromForm() {
 		logger.debug("Searching with " + searchValue + " type: " + selectedType);
 		Object retval = null;
 		if (!ValidationUtils.isValid(selectedMaxResults)) {
@@ -89,7 +112,9 @@ public class GlobalSearch {
 		return retval;
 	}
 
-	void onValidateFromGlobalSearchForm() {
+	@OnEvent(value = EventConstants.VALIDATE, component = "globalSearchForm")
+	void onValidateFromForm() {
+	    logger.debug("Validating");
 		// The searchValue must be valid -- no script tags, etc.
 		// The search type must be a valid type from the list
 		// The search number must be a valid number from the list.

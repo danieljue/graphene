@@ -1,13 +1,33 @@
+/*
+ *
+ *  Licensed to the Apache Software Foundation (ASF) under one
+ *  or more contributor license agreements.  See the NOTICE file
+ *  distributed with this work for additional information
+ *  regarding copyright ownership.  The ASF licenses this file
+ *  to you under the Apache License, Version 2.0 (the
+ *  "License"); you may not use this file except in compliance
+ *  with the License.  You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package graphene.rest.ws.impl;
 
 import graphene.dao.HyperGraphBuilder;
 import graphene.dao.LoggingDAO;
 import graphene.dao.WorkspaceDAO;
 import graphene.model.graph.G_PersistedGraph;
+import graphene.model.idl.G_EntityQueryEvent;
 import graphene.model.idl.G_GraphViewEvent;
 import graphene.model.idl.G_SymbolConstants;
 import graphene.model.idl.G_User;
 import graphene.model.idl.G_UserDataAccess;
+import graphene.model.idlhelper.AuthenticatorHelper;
 import graphene.rest.ws.CSGraphServerRS;
 import graphene.util.DataFormatConstants;
 import graphene.util.FastNumberUtils;
@@ -35,6 +55,9 @@ public class CSGraphServerRSImpl implements CSGraphServerRS {
 
 	@Inject
 	private Logger logger;
+	
+	@Inject
+	private AuthenticatorHelper authenticatorHelper;
 
 	@InjectService("HyperProperty")
 	private HyperGraphBuilder propertyGraphBuilder;
@@ -95,7 +118,7 @@ public class CSGraphServerRSImpl implements CSGraphServerRS {
 		final int maxEdgesPerNodeInt = FastNumberUtils.parseIntWithCheck(maxEdgesPerNode, 100);
 
 		V_CSGraph m = null;
-		if (requireAuthentication && (rq.getHTTPServletRequest().getRemoteUser() == null)) {
+		if (requireAuthentication && (authenticatorHelper.getUsername() == null)) {
 			// The user needs to be authenticated.
 			m = new V_CSGraph();
 			m.setIntStatus(1);
@@ -108,11 +131,10 @@ public class CSGraphServerRSImpl implements CSGraphServerRS {
 			// authenticated.
 
 			String userId = null;
-			String username = null;
+			String username = authenticatorHelper.getUsername();
 			if (requireAuthentication) {
-				if (ValidationUtils.isValid(rq.getHTTPServletRequest().getRemoteUser())) {
+				if (ValidationUtils.isValid(username)) {
 					try {
-						username = rq.getHTTPServletRequest().getRemoteUser();
 						final G_User byUsername = userDataAccess.getByUsername(username);
 						userId = byUsername.getId();
 					} catch (final Exception e) {
@@ -212,15 +234,15 @@ public class CSGraphServerRSImpl implements CSGraphServerRS {
 
 	@Override
 	public Response saveGraph(final String graphSeed, final String username, final String timeStamp, final String graph) {
-		if (requireAuthentication && (rq.getHTTPServletRequest().getRemoteUser() == null)) {
+		if (requireAuthentication && (authenticatorHelper.getUsername() == null)) {
 			// The user needs to be authenticated.
 			logger.error("User must be logged in to save a graph.");
 			return Response.status(200).entity("Unable to save, you must be logged in. ").build();
 		} else {
 			String authenticatedUsername = username;
 			try {
-				if (ValidationUtils.isValid(rq.getHTTPServletRequest().getRemoteUser())) {
-					authenticatedUsername = rq.getHTTPServletRequest().getRemoteUser();
+				if (ValidationUtils.isValid(authenticatorHelper.getUsername())) {
+					authenticatedUsername = authenticatorHelper.getUsername();
 					// final G_User byUsername =
 					// userDataAccess.getByUsername(authenticatedUsername);
 					// byUsername.getId();

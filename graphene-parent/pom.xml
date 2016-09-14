@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>graphene</groupId>
 	<artifactId>graphene-parent</artifactId>
-	<version>4.2.0-SNAPSHOT</version>
+	<version>4.2.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<prerequisites>
 		<maven>3.0.4</maven>
@@ -14,7 +14,6 @@
 		<module>graphene-util</module>
 		<module>graphene-dao</module>
 		<module>graphene-dao-sql</module>
-		<module>graphene-dao-neo4j</module>
 		<module>graphene-dao-titan</module>
 		<module>graphene-dao-es</module>
 		<module>graphene-export</module>
@@ -30,6 +29,11 @@
 		<module>graphene-extraction</module>
     <module>graphene-security</module>
   </modules>
+  
+  <scm>
+  	<url>https://github.com/Sotera/graphene</url>
+	<connection>scm:git:git://github.com/Sotera/graphene.git</connection>
+  </scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -47,7 +51,7 @@
 		<querydsl.version>3.3.1</querydsl.version>
 
 		<!-- properties for dependencies that are utilities -->
-		<vande.version>4.2.0-SNAPSHOT</vande.version>
+		<vande.version>4.2.0</vande.version>
 		<jackson2.version>2.2.1	</jackson2.version>
 		<!-- <jackson2.version>2.3.0</jackson2.version> 2.3.0 does not work with 
 			resteasy 3.0.5.Final or 3.0.6.Final. -->
@@ -314,7 +318,7 @@
 			<dependency>
 				<groupId>org.tynamo</groupId>
 				<artifactId>tapestry-security</artifactId>
-				<version>0.5.1</version>
+				<version>0.6.2</version>
 			</dependency>
 			<dependency>
 				<groupId>org.lazan</groupId>
@@ -498,6 +502,7 @@
 				<updatePolicy>always</updatePolicy>
 			</snapshots>
 		</repository>
+		<!--  
 		<repository>
 			<id>batch-insert-graphene-mvn-repo</id>
 			<url>https://raw.github.com/danieljue/batch-import-graphene/mvn-repo/</url>
@@ -506,6 +511,7 @@
 				<updatePolicy>always</updatePolicy>
 			</snapshots>
 		</repository>
+		-->
 		<!-- T5 Jquery integration (only needed for <= 5.3.x) -->
 		<repository>
 			<snapshots>
@@ -626,6 +632,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${maven-surefire-plugin.version}</version>
 					<executions>
 						<execution>
 							<id>surefire</id>
@@ -648,7 +655,7 @@
 					<artifactId>maven-javadoc-plugin</artifactId>
 					<version>2.9</version>
 					<configuration>
-						<dependencySourceExcludes/>
+						<dependencySourceExcludes />
 						<failOnError>false</failOnError>
 					</configuration>
 				</plugin>
